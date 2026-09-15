@@ -1,0 +1,72 @@
+# =========================
+# Python
+# =========================
+
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+backend/.venv/
+.venv/
+env/
+venv/
+ENV/
+
+# Python packaging
+*.egg-info/
+dist/
+build/
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+
+# =========================
+# Node / Frontend
+# =========================
+
+frontend/node_modules/
+frontend/dist/
+
+# Local environment files
+*.local
+
+
+# =========================
+# Environment Variables
+# =========================
+
+.env
+.env.*
+!.env.example
+
+
+# =========================
+# Database & Local Data
+# =========================
+
+backend/data/*.db
+*.db
+*.sqlite
+*.sqlite3
+
+
+# =========================
+# OS
+# =========================
+
+.DS_Store
+Thumbs.db
+
+
+# =========================
+# IDE
+# =========================
+
+.vscode/
+.idea/

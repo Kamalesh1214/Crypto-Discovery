@@ -1,0 +1,292 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Search, 
+  Database, 
+  Download, 
+  FileJson, 
+  FileSpreadsheet, 
+  Eye, 
+  Layers, 
+  CheckCircle,
+  Filter
+} from 'lucide-react';
+import { getInventory, getJsonReportUrl, getCsvReportUrl } from '../services/api';
+import { SeverityBadge, ExposureBadge, PqcBadge, EffortBadge } from '../components/Badge';
+import { FindingDetailModal } from '../components/FindingDetailModal';
+
+export function CBOMPage({ scanId, scan }) {
+  const [items, setItems] = useState([]);
+  const [filteredItems, setFilteredItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [severityFilter, setSeverityFilter] = useState('ALL');
+  const [exposureFilter, setExposureFilter] = useState('ALL');
+  const [pqcFilter, setPqcFilter] = useState('ALL');
+  const [typeFilter, setTypeFilter] = useState('ALL');
+  const [selectedFinding, setSelectedFinding] = useState(null);
+
+  useEffect(() => {
+    async function loadData() {
+      if (!scanId) return;
+      try {
+        setLoading(true);
+        const data = await getInventory(scanId);
+        setItems(data);
+        setFilteredItems(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [scanId]);
+
+  // Filtering & Search
+  useEffect(() => {
+    let result = items;
+
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (it) =>
+          it.algorithm.toLowerCase().includes(q) ||
+          it.file.toLowerCase().includes(q) ||
+          it.library.toLowerCase().includes(q) ||
+          it.type.toLowerCase().includes(q)
+      );
+    }
+
+    if (severityFilter !== 'ALL') {
+      result = result.filter((it) => it.severity.toUpperCase() === severityFilter);
+    }
+
+    if (exposureFilter !== 'ALL') {
+      result = result.filter((it) => it.potential_exposure.toUpperCase() === exposureFilter);
+    }
+
+    if (pqcFilter !== 'ALL') {
+      result = result.filter((it) => it.pqc_migration_candidate === pqcFilter);
+    }
+
+    if (typeFilter !== 'ALL') {
+      result = result.filter((it) => it.type.includes(typeFilter));
+    }
+
+    setFilteredItems(result);
+  }, [search, severityFilter, exposureFilter, pqcFilter, typeFilter, items]);
+
+  const jsonUrl = scanId ? getJsonReportUrl(scanId) : '#';
+  const csvUrl = scanId ? getCsvReportUrl(scanId) : '#';
+
+  return (
+    <div className="page-wrapper">
+      {/* Module Title & Export Actions */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.35rem' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: 'var(--accent-cyan)', fontSize: '0.85rem' }}>
+              03 CBOM
+            </span>
+            <span style={{ color: 'var(--border-light)' }}>•</span>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 900, color: '#ffffff' }}>
+              Cryptographic Inventory Studio
+            </h1>
+          </div>
+
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            CBOM-ready Cryptographic Inventory • Centralized catalogue of algorithms, keys, libraries, cipher modes, and locations
+          </p>
+        </div>
+
+        {/* Export Buttons */}
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <a
+            href={jsonUrl}
+            download
+            className="cyber-btn cyber-btn-primary"
+            style={{ textDecoration: 'none', padding: '0.55rem 1rem', fontSize: '0.8rem' }}
+          >
+            <FileJson size={15} />
+            <span>Export JSON CBOM</span>
+          </a>
+          <a
+            href={csvUrl}
+            download
+            className="cyber-btn cyber-btn-secondary"
+            style={{ textDecoration: 'none', padding: '0.55rem 1rem', fontSize: '0.8rem', color: 'var(--accent-teal)', borderColor: 'var(--border-light)' }}
+          >
+            <FileSpreadsheet size={15} />
+            <span>Export CSV Audit</span>
+          </a>
+        </div>
+      </div>
+
+      {/* Filter and Search Console */}
+      <div className="cyber-card" style={{ padding: '1rem', marginBottom: '1.5rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
+        {/* Search */}
+        <div style={{ position: 'relative', flex: '1 1 240px' }}>
+          <Search size={16} color="var(--text-dim)" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+          <input
+            type="text"
+            className="cyber-input"
+            style={{ width: '100%', paddingLeft: '2rem' }}
+            placeholder="Filter by algorithm, file, library..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        {/* Severity Filter */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>Severity:</label>
+          <select 
+            className="cyber-input"
+            value={severityFilter}
+            onChange={(e) => setSeverityFilter(e.target.value)}
+          >
+            <option value="ALL">All Severities</option>
+            <option value="CRITICAL">Critical</option>
+            <option value="HIGH">High</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="LOW">Low</option>
+          </select>
+        </div>
+
+        {/* Exposure Filter */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>Exposure:</label>
+          <select 
+            className="cyber-input"
+            value={exposureFilter}
+            onChange={(e) => setExposureFilter(e.target.value)}
+          >
+            <option value="ALL">All Exposures</option>
+            <option value="VERY HIGH">Very High</option>
+            <option value="HIGH">High</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="LOW">Low</option>
+          </select>
+        </div>
+
+        {/* PQC Candidate Filter */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>PQC:</label>
+          <select 
+            className="cyber-input"
+            value={pqcFilter}
+            onChange={(e) => setPqcFilter(e.target.value)}
+          >
+            <option value="ALL">All PQC Status</option>
+            <option value="Candidate">PQC Candidate</option>
+            <option value="Not Immediate">Not Immediate</option>
+            <option value="Not Required">Not Required</option>
+          </select>
+        </div>
+
+        <span style={{ marginLeft: 'auto', fontSize: '0.8rem', color: 'var(--accent-cyan)', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
+          {filteredItems.length} of {items.length} Artefacts
+        </span>
+      </div>
+
+      {/* CBOM Inventory Table */}
+      <div className="cyber-table-container">
+        <table className="cyber-table">
+          <thead>
+            <tr>
+              <th>Algorithm</th>
+              <th>Primitive Type</th>
+              <th>Mode / Key Size</th>
+              <th>Library</th>
+              <th>File & Line</th>
+              <th>Severity</th>
+              <th>Quantum Risk</th>
+              <th>PQC Candidate</th>
+              <th>Exposure</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan="10" style={{ textAlign: 'center', padding: '3.5rem', color: 'var(--text-muted)' }}>
+                  Loading CBOM inventory data...
+                </td>
+              </tr>
+            ) : filteredItems.length === 0 ? (
+              <tr>
+                <td colSpan="10" style={{ textAlign: 'center', padding: '3.5rem', color: 'var(--text-muted)' }}>
+                  No cryptographic artefacts match your query filter.
+                </td>
+              </tr>
+            ) : (
+              filteredItems.map((item) => (
+                <tr 
+                  key={item.id}
+                  onClick={() => setSelectedFinding(item)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <td style={{ fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-mono)' }}>
+                    {item.algorithm}
+                  </td>
+                  <td style={{ fontSize: '0.8rem', color: 'var(--text-main)' }}>
+                    {item.type}
+                  </td>
+                  <td>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--accent-cyan)' }}>{item.mode}</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>{item.key_size}</div>
+                  </td>
+                  <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    {item.library}
+                  </td>
+                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--accent-teal)' }}>
+                    {item.file}:{item.line}
+                  </td>
+                  <td>
+                    <SeverityBadge severity={item.severity} />
+                  </td>
+                  <td>
+                    <span style={{ 
+                      fontSize: '0.72rem', 
+                      fontWeight: 700,
+                      color: item.quantum_risk === 'HIGH' ? '#f87171' : item.quantum_risk === 'MEDIUM' ? '#fde047' : '#6ee7b7'
+                    }}>
+                      {item.quantum_risk}
+                    </span>
+                  </td>
+                  <td>
+                    <PqcBadge candidate={item.pqc_migration_candidate} />
+                  </td>
+                  <td>
+                    <ExposureBadge level={item.potential_exposure} />
+                  </td>
+                  <td>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedFinding(item);
+                      }}
+                      className="cyber-btn cyber-btn-secondary"
+                      style={{ padding: '0.35rem 0.65rem', fontSize: '0.72rem' }}
+                    >
+                      <Eye size={13} />
+                      <span>Inspect</span>
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Finding Detail Drawer Modal */}
+      {selectedFinding && (
+        <FindingDetailModal
+          finding={selectedFinding}
+          onClose={() => setSelectedFinding(null)}
+        />
+      )}
+    </div>
+  );
+}

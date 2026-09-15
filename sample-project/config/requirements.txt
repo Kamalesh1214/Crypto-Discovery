@@ -1,0 +1,3 @@
+# CryptoLens Sample Project Dependencies
+pycryptodome>=3.19.0
+cryptography>=41.0.0
