@@ -146,8 +146,6 @@ Cryptographic Discovery aims to provide organizations with visibility into their
 
 **[⬇️ Download Demo Files — sample-project.zip](https://github.com/Kamalesh1214/Crypto-Discovery/raw/refs/heads/main/samples/sample-project.zip)**
 
-OR
-
 **[⬇️ Download Demo Files — cryptographic-discovery-advanced-test.zip](https://github.com/Kamalesh1214/Crypto-Discovery/raw/refs/heads/main/samples/cryptographic-discovery-advanced-test.zip)**
 
 **[🚀 Live Demo](https://crypto-discovery.vercel.app/)**
